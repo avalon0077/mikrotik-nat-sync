@@ -1,4 +1,4 @@
-Markdown
+
 # 🌐 MikroTik NAT Sync for Pelican Panel
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -19,39 +19,51 @@ Markdown
 
 ### 🛠 MikroTik Configuration
 Enable the REST API on your router to allow communication:
-```bash
+```Bash
 /ip service set www-ssl disabled=no port=9443
+```
 Note: We recommend creating a dedicated user with specific firewall permissions.
 
-📦 Installation
-Place the plugin in /var/www/pelican/plugins/mikrotik-nat-sync.
+### 📦 Installation / Встановлення
 
-Go to Plugins in the Pelican Admin Panel and click Install.
+**Method 1: Via Web Interface (Recommended)**
+1. Copy the URL of this repository.
+2. Go to **Plugins** -> **Import from URL** in your Pelican Admin Panel.
+3. Paste the link and click **Import**.
+4. Click **Install** and configure via the Gear icon.
 
-Configure your connection settings via the Gear icon.
+**Method 2: Manual (CLI)**
+1. Clone this repo to `/var/www/pelican/plugins/mikrotik-nat-sync`.
+2. Head to the **Plugins** page and click **Install**.
 
 🇺🇦 Українською
-🚀 Можливості
-Повна автоматизація: Автоматично керує правилами DST-NAT на основі активних алокацій.
+### 🚀 Можливості
+* **Повна автоматизація**: Автоматично керує правилами DST-NAT на основі активних алокацій.
 
-Безпека: Список "Заборонених портів" для захисту системних сервісів.
+* **Безпека**: Список "Заборонених портів" для захисту системних сервісів.
 
-Розумні теги: Керує лише своїми правилами через коментар Pelican:.
+* **Розумні теги**: Керує лише своїми правилами через коментар Pelican:.
 
-Зручне налаштування: Налаштуйте IP, логін, пароль та інтервали прямо в адмінці.
+* **Зручне налаштування**: Налаштуйте IP, логін, пароль та інтервали прямо в адмінці.
 
-🛠 Налаштування MikroTik
+### 🛠 Налаштування MikroTik
 Увімкніть REST API для можливості віддаленого керування:
 
-Bash
+```Bash
 /ip service set www-ssl disabled=no port=9443
+```
 Порада: Створіть окремого користувача з правами на роботу лише з Firewall.
 
-📦 Встановлення
-Скопіюйте плагін у /var/www/pelican/plugins/mikrotik-nat-sync.
+### 📦 Installation / Встановлення
 
-Перейдіть у розділ Plugins в адмінці та натисніть Install.
+**Спосіб 1: Через веб-інтерфейс (Рекомендовано)**
+1. Скопіюйте посилання на цей репозиторій.
+2. Перейдіть у розділ **Plugins** -> **Import from URL** в адмінці Pelican.
+3. Вставте посилання та натисніть **Import**.
+4. Натисніть **Install** та налаштуйте через іконку шестерні.
 
-Введіть дані для підключення через іконку шестерні.
+**Спосіб 2: Вручну (через консоль)**
+1. Клонуйте репозиторій у папку `/var/www/pelican/plugins/mikrotik-nat-sync`.
+2. Перейдіть на сторінку **Plugins** та натисніть **Install**.
 
-Developed with AI Assistance (Gemini) > Розроблено за допомогою ШІ (Gemini)
+>Developed with AI Assistance (Gemini) Розроблено за допомогою ШІ (Gemini)
