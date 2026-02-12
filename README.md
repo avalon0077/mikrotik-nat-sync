@@ -36,7 +36,10 @@ Note: We recommend creating a dedicated user with specific firewall permissions.
 1. Clone this repo to `/var/www/pelican/plugins/mikrotik-nat-sync`.
 2. Head to the **Plugins** page and click **Install**.
 
-🇺🇦 Українською
+---
+
+## 🇺🇦 Українською
+
 ### 🚀 Можливості
 * **Повна автоматизація**: Автоматично керує правилами DST-NAT на основі активних алокацій.
 
