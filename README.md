@@ -26,15 +26,17 @@ Note: We recommend creating a dedicated user with specific firewall permissions.
 
 ### 📦 Installation / Встановлення
 
-**Method 1: Via Web Interface (Recommended)**
-1. Copy the URL of this repository.
-2. Go to **Plugins** -> **Import from URL** in your Pelican Admin Panel.
-3. Paste the link and click **Import**.
+**Method 1: Via Web Interface (Easiest)**
+1. Copy the direct link to the plugin ZIP archive:
+   `https://github.com/avalon0077/mikrotik-nat-sync/archive/refs/heads/main.zip`
+2. In your Pelican Admin Panel, go to **Plugins** -> **Import**.
+3. Paste the URL or upload the downloaded ZIP file.
 4. Click **Install** and configure via the Gear icon.
 
 **Method 2: Manual (CLI)**
-1. Clone this repo to `/var/www/pelican/plugins/mikrotik-nat-sync`.
-2. Head to the **Plugins** page and click **Install**.
+1. Download and extract the archive to `/var/www/pelican/plugins/mikrotik-nat-sync`.
+2. Make sure the folder name is exactly `mikrotik-nat-sync`.
+3. Head to the **Plugins** page and click **Install**.
 
 ---
 
@@ -59,14 +61,16 @@ Note: We recommend creating a dedicated user with specific firewall permissions.
 
 ### 📦 Installation / Встановлення
 
-**Спосіб 1: Через веб-інтерфейс (Рекомендовано)**
-1. Скопіюйте посилання на цей репозиторій.
-2. Перейдіть у розділ **Plugins** -> **Import from URL** в адмінці Pelican.
-3. Вставте посилання та натисніть **Import**.
+**Спосіб 1: Через веб-інтерфейс (Найпростіший)**
+1. Скопіюйте пряме посилання на ZIP-архів плагіна:
+   `https://github.com/avalon0077/mikrotik-nat-sync/archive/refs/heads/main.zip`
+2. В адмін-панелі Pelican перейдіть у **Plugins** -> **Import**.
+3. Вставте посилання або завантажте попередньо скачаний ZIP-файл.
 4. Натисніть **Install** та налаштуйте через іконку шестерні.
 
 **Спосіб 2: Вручну (через консоль)**
-1. Клонуйте репозиторій у папку `/var/www/pelican/plugins/mikrotik-nat-sync`.
-2. Перейдіть на сторінку **Plugins** та натисніть **Install**.
+1. Скачайте та розпакуйте архів у папку `/var/www/pelican/plugins/mikrotik-nat-sync`.
+2. Переконайтеся, що папка називається саме `mikrotik-nat-sync`.
+3. Перейдіть на сторінку **Plugins** та натисніть **Install**.
 
 >Developed with AI Assistance (Gemini) Розроблено за допомогою ШІ (Gemini)
