@@ -22,25 +22,27 @@ class MikroTikNATSyncPlugin implements FilamentPlugin, HasPluginSettings
 
     public function register(Panel $panel): void
     {
-        //
+        // Реєструємо розклад під час завантаження додатку
+        app()->booted(function () {
+            if (app()->runningInConsole()) {
+                $schedule = app(Schedule::class);
+                $interval = env('MIKROTIK_NAT_SYNC_INTERVAL', 'everyFiveMinutes');
+                
+                $schedule->command('mikrotik:sync')
+                    ->{$interval}()
+                    ->withoutOverlapping();
+            }
+        });
     }
 
     public function boot(Panel $panel): void
     {
+        // Реєструємо консольну команду
         if (app()->runningInConsole()) {
             $this->commands([
                 \Avalon\MikroTikNATSync\Console\Commands\SyncMikrotikCommand::class,
             ]);
         }
-
-        app()->booted(function () {
-            $schedule = app(Schedule::class);
-            $interval = env('MIKROTIK_NAT_SYNC_INTERVAL', 'everyFiveMinutes');
-            
-            $schedule->command('mikrotik:sync')
-                ->{$interval}()
-                ->withoutOverlapping();
-        });
     }
 
     public function getSettingsForm(): array
