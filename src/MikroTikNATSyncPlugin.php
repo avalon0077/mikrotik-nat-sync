@@ -66,9 +66,9 @@ class MikroTikNATSyncPlugin implements FilamentPlugin, HasPluginSettings
                 ->revealable()
                 ->default(env('MIKROTIK_NAT_SYNC_PASSWORD')),
             TextInput::make('mk_interface')
-                ->label('WAN Interface')
-                ->default(env('MIKROTIK_NAT_SYNC_INTERFACE', 'ether1'))
-                ->required(),
+                ->label('WAN Interface (Optional)')
+                ->placeholder('Залиште порожнім для всіх інтерфейсів')
+                ->default(env('MIKROTIK_NAT_SYNC_INTERFACE')),
             TextInput::make('mk_forbidden_ports')
                 ->label('Forbidden Ports (comma separated)')
                 ->placeholder('22, 80, 443, 3306')
