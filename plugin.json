@@ -1,8 +1,9 @@
 {
     "id": "mikrotik-nat-sync",
+    "api_version": 1,
     "name": "MikroTik NAT Sync",
     "author": "avalon",
-    "version": "1.0.0",
+    "version": "1.1.1",
     "description": null,
     "category": "plugin",
     "url": null,
