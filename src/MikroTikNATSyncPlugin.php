@@ -2,95 +2,50 @@
 
 namespace Avalon\MikroTikNATSync;
 
-use Filament\Contracts\Plugin as FilamentPlugin;
-use Filament\Panel;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Notifications\Notification;
 use App\Contracts\Plugins\HasPluginSettings;
 use App\Traits\EnvironmentWriterTrait;
-use Illuminate\Console\Scheduling\Schedule;
+use Avalon\MikroTikNATSync\Providers\MikroTikNATSyncPluginProvider;
+use Filament\Contracts\Plugin as FilamentPlugin;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
+use Filament\Panel;
 
 class MikroTikNATSyncPlugin implements FilamentPlugin, HasPluginSettings
 {
     use EnvironmentWriterTrait;
-
-    /**
-     * Панель викликає register() окремо для кожної панелі (admin, app, server),
-     * тому без цього прапорця завдання потрапляє в розклад тричі.
-     */
-    private static bool $scheduleRegistered = false;
-
-    /**
-     * Команда реєструється один раз на життя процесу, з тієї ж причини.
-     */
-    private static bool $commandsRegistered = false;
 
     public function getId(): string
     {
         return 'mikrotik-nat-sync';
     }
 
-    public function register(Panel $panel): void
-    {
-        if (self::$scheduleRegistered) {
-            return;
-        }
+    // The console command and the schedule are registered by Pelican itself
+    // (auto-discovered command + MikroTikNATSyncPluginProvider), nothing per panel.
+    public function register(Panel $panel): void {}
 
-        self::$scheduleRegistered = true;
-
-        // Реєструємо розклад під час завантаження додатку
-        app()->booted(function () {
-            if (!app()->runningInConsole()) {
-                return;
-            }
-
-            $interval = env('MIKROTIK_NAT_SYNC_INTERVAL', 'everyFiveMinutes');
-
-            // Захист від опечатки в .env — інакше буде BadMethodCallException
-            $allowed = ['everyMinute', 'everyFiveMinutes', 'everyTenMinutes', 'hourly'];
-
-            if (!in_array($interval, $allowed, true)) {
-                $interval = 'everyFiveMinutes';
-            }
-
-            app(Schedule::class)
-                ->command('mikrotik:sync')
-                ->{$interval}()
-                ->withoutOverlapping();
-        });
-    }
-
-    public function boot(Panel $panel): void
-    {
-        if (self::$commandsRegistered || !app()->runningInConsole()) {
-            return;
-        }
-
-        self::$commandsRegistered = true;
-
-        // Реєструємо консольну команду
-        $this->commands([
-            \Avalon\MikroTikNATSync\Console\Commands\SyncMikrotikCommand::class,
-        ]);
-    }
+    public function boot(Panel $panel): void {}
 
     /**
-     * Поточні значення, якими панель заповнює форму налаштувань.
-     * Ключі мають збігатися з іменами полів у getSettingsForm().
-     *
      * @return array<string, mixed>
      */
     public function getSettingsFormData(): array
     {
+        $c = config('mikrotik-nat-sync');
+
         return [
-            'mk_ip' => env('MIKROTIK_NAT_SYNC_IP'),
-            'mk_port' => env('MIKROTIK_NAT_SYNC_PORT', '9080'),
-            'mk_user' => env('MIKROTIK_NAT_SYNC_USER'),
-            'mk_pass' => env('MIKROTIK_NAT_SYNC_PASSWORD'),
-            'mk_interface' => env('MIKROTIK_NAT_SYNC_INTERFACE'),
-            'mk_forbidden_ports' => env('MIKROTIK_NAT_SYNC_FORBIDDEN_PORTS'),
-            'mk_interval' => env('MIKROTIK_NAT_SYNC_INTERVAL', 'everyFiveMinutes'),
+            'mk_ip' => $c['host'] ?? null,
+            'mk_port' => $c['port'] ?? '9080',
+            'mk_scheme' => $c['scheme'] ?? 'http',
+            'mk_verify_tls' => (bool) ($c['verify_tls'] ?? true),
+            'mk_user' => $c['username'] ?? null,
+            'mk_pass' => $c['password'] ?? null,
+            'mk_interface' => $c['interface'] ?? null,
+            'mk_default_target' => $c['default_target'] ?? null,
+            'mk_forbidden_ports' => $c['forbidden_ports'] ?? null,
+            'mk_protect_services' => (bool) ($c['protect_router_services'] ?? true),
+            'mk_interval' => $c['interval'] ?? 'everyFiveMinutes',
         ];
     }
 
@@ -101,12 +56,20 @@ class MikroTikNATSyncPlugin implements FilamentPlugin, HasPluginSettings
     {
         return [
             TextInput::make('mk_ip')
-                ->label('MikroTik IP')
+                ->label('MikroTik address')
+                ->helperText('IP or hostname of the router (optionally host:port).')
                 ->required(),
             TextInput::make('mk_port')
-                ->label('REST API Port')
+                ->label('REST API port')
                 ->numeric()
                 ->required(),
+            Select::make('mk_scheme')
+                ->label('Protocol')
+                ->options(['http' => 'HTTP (www service)', 'https' => 'HTTPS (www-ssl service)'])
+                ->required(),
+            Toggle::make('mk_verify_tls')
+                ->label('Verify HTTPS certificate')
+                ->helperText('Turn off only for a self-signed router certificate.'),
             TextInput::make('mk_user')
                 ->label('Username')
                 ->required(),
@@ -115,17 +78,22 @@ class MikroTikNATSyncPlugin implements FilamentPlugin, HasPluginSettings
                 ->password()
                 ->revealable(),
             TextInput::make('mk_interface')
-                ->label('WAN Interface (Optional)')
-                ->placeholder('Залиште порожнім для всіх інтерфейсів'),
+                ->label('WAN interface (optional)')
+                ->helperText('Empty: rules match traffic addressed to the router itself (dst-address-type=local).'),
+            TextInput::make('mk_default_target')
+                ->label('Target IP for 0.0.0.0 allocations (optional)')
+                ->helperText('Empty: allocations on 0.0.0.0 are skipped.'),
             TextInput::make('mk_forbidden_ports')
-                ->label('Forbidden Ports (comma separated)')
+                ->label('Forbidden ports (comma separated)')
                 ->placeholder('22, 80, 443, 3306'),
+            Toggle::make('mk_protect_services')
+                ->label('Never forward ports of enabled router services'),
             Select::make('mk_interval')
-                ->label('Sync Interval')
+                ->label('Sync interval')
                 ->options([
-                    'everyMinute' => 'Every Minute',
-                    'everyFiveMinutes' => 'Every 5 Minutes',
-                    'everyTenMinutes' => 'Every 10 Minutes',
+                    'everyMinute' => 'Every minute',
+                    'everyFiveMinutes' => 'Every 5 minutes',
+                    'everyTenMinutes' => 'Every 10 minutes',
                     'hourly' => 'Hourly',
                 ])
                 ->required(),
@@ -137,18 +105,27 @@ class MikroTikNATSyncPlugin implements FilamentPlugin, HasPluginSettings
      */
     public function saveSettings(array $data): void
     {
+        $interval = $data['mk_interval'] ?? 'everyFiveMinutes';
+        if (!in_array($interval, MikroTikNATSyncPluginProvider::INTERVALS, true)) {
+            $interval = 'everyFiveMinutes';
+        }
+
         $this->writeToEnvironment([
-            'MIKROTIK_NAT_SYNC_IP' => $data['mk_ip'] ?? '',
-            'MIKROTIK_NAT_SYNC_PORT' => $data['mk_port'] ?? '9080',
-            'MIKROTIK_NAT_SYNC_USER' => $data['mk_user'] ?? '',
-            'MIKROTIK_NAT_SYNC_PASSWORD' => $data['mk_pass'] ?? '',
-            'MIKROTIK_NAT_SYNC_INTERFACE' => $data['mk_interface'] ?? '',
-            'MIKROTIK_NAT_SYNC_INTERVAL' => $data['mk_interval'] ?? 'everyFiveMinutes',
-            'MIKROTIK_NAT_SYNC_FORBIDDEN_PORTS' => $data['mk_forbidden_ports'] ?? '',
+            'MIKROTIK_NAT_SYNC_IP' => trim((string) ($data['mk_ip'] ?? '')),
+            'MIKROTIK_NAT_SYNC_PORT' => trim((string) ($data['mk_port'] ?? '9080')),
+            'MIKROTIK_NAT_SYNC_SCHEME' => ($data['mk_scheme'] ?? 'http') === 'https' ? 'https' : 'http',
+            'MIKROTIK_NAT_SYNC_VERIFY_TLS' => !empty($data['mk_verify_tls']) ? 'true' : 'false',
+            'MIKROTIK_NAT_SYNC_USER' => (string) ($data['mk_user'] ?? ''),
+            'MIKROTIK_NAT_SYNC_PASSWORD' => (string) ($data['mk_pass'] ?? ''),
+            'MIKROTIK_NAT_SYNC_INTERFACE' => trim((string) ($data['mk_interface'] ?? '')),
+            'MIKROTIK_NAT_SYNC_DEFAULT_TARGET' => trim((string) ($data['mk_default_target'] ?? '')),
+            'MIKROTIK_NAT_SYNC_FORBIDDEN_PORTS' => (string) ($data['mk_forbidden_ports'] ?? ''),
+            'MIKROTIK_NAT_SYNC_PROTECT_SERVICES' => !empty($data['mk_protect_services']) ? 'true' : 'false',
+            'MIKROTIK_NAT_SYNC_INTERVAL' => $interval,
         ]);
 
         Notification::make()
-            ->title('Settings saved successfully')
+            ->title('Settings saved')
             ->success()
             ->send();
     }

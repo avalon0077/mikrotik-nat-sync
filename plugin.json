@@ -3,18 +3,14 @@
     "api_version": 1,
     "name": "MikroTik NAT Sync",
     "author": "avalon",
-    "version": "1.1.1",
-    "description": null,
+    "version": "1.2.0",
+    "description": "Keeps MikroTik dst-nat port forwards in sync with Pelican server allocations.",
     "category": "plugin",
-    "url": null,
+    "url": "https://github.com/avalon0077/mikrotik-nat-sync",
     "update_url": null,
     "namespace": "Avalon\\MikroTikNATSync",
     "class": "MikroTikNATSyncPlugin",
     "panels": null,
     "panel_version": "^1.0.0-beta36",
-    "composer_packages": null,
-    "meta": {
-        "status": "enabled",
-        "status_message": null
-    }
+    "composer_packages": null
 }
